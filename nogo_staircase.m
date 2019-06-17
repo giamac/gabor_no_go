@@ -1,13 +1,13 @@
 function data = nogo_staircase(subj_number)
 
-trial_number = 40; %Number of trials in nogo_staircase
+trial_number = 20; %Number of trials in nogo_staircase
 
 %Define Staircase parameters
+%% In Frames (for 60HZ) each trial is 15 frames
+initalMaskDuration = 9;
+initalStimulusDuration = 6;
+stepsize = 1;
 
-initalMaskDuration = 0.128;
-initalStimulusDuration = 0.1;
-stepsize = 0.016;
-blank = 0.032;
 
 %Screen resolution
 res = [1920 1080];
@@ -35,7 +35,7 @@ if exist(file_name_mat) == 2;
 end
 cd(myHome);
 
-Screen('Preference', 'SkipSyncTests', 1);
+Screen('Preference', 'SkipSyncTests', 0);
 screenNum=0;
 offx = 0; offy = 0;
 maskDuration = initalMaskDuration;
@@ -46,10 +46,6 @@ Trialtime = 2;
 offsets = [0 0];
 maximum_value = 255;
 
-%% Images
-mask = imread('img/mask.png');
-diamond_left = imread('img/left_diamond.png');
-diamond_right = imread('img/right_diamond.png');
 
 
 disp('Welcome to the No Go experiment');
@@ -73,6 +69,8 @@ cd(myHome);
 while KbCheck; end
 
 [w,rect] = Screen('OpenWindow', screenNum, [255 255 255], [0 0 res(1) res(2)]);
+
+frameRate = 1/Screen('GetFlipInterval',w); %Hz
 % define window w and open screen
 [xc,yc] = RectCenter(rect);
 
@@ -91,10 +89,10 @@ yCoordOuter = [yc + (polyHeightOuter /2), yc, yc - (polyHeightOuter /2), yc]';
 polyCoordsOuter = [xCoordOuter yCoordOuter];
 
 %Right Rectangle
-rightRect =  [(xc + (polyWidth/2) - 8) (yc-8) (xc + (polyWidth/2)) (yc+8)];
+rightRect =  [(xc + (polyWidth/2) - 4) (yc-4) (xc + (polyWidth/2)) (yc+4)];
 
 %left Rectangle
-leftRect =  [(xc - (polyWidth/2)) (yc-8) (xc - (polyWidth/2) + 8) (yc+8)];
+leftRect =  [(xc - (polyWidth/2)) (yc-4) (xc - (polyWidth/2) + 4) (yc+4)];
 textSize = 30;
 oldTextSize=Screen('TextSize', w, textSize); %%%,textSize
 %%%keyboard
@@ -136,16 +134,17 @@ trials = totalTrials(randperm(length(totalTrials)));
 correctInaRow = 0;
 
 %Start the task here
+%vbl = Screen('Flip', w);
 for t = 1:trial_number
-  Screen('ColorRange', w , white, 0, 1);
   start_time_trial(t) = GetSecs - time_start_exp;
-  Screen('FillRect', w, white);
 %  imageTexture = Screen('MakeTexture', w, diamond_left);
 %  Screen('DrawTexture', w, imageTexture, [], [], 0);
 %  Screen('Flip',w);
 %  Screen('FramePoly', w, [0 0 0], polyCoords, 3);
 
 %Display the stimulus
+t0 = GetSecs;
+for f = 1:stimulusDuration
 Screen('FillPoly', w, [0 0 0], polyCoords, 3);
 if trials(t) == 1
   Screen('FillRect', w, white, leftRect );
@@ -153,19 +152,20 @@ elseif trials(t) == 2
   Screen('FillRect', w, white, rightRect );
 end
 
-Screen('Flip', w);
-WaitSecs(stimulusDuration);
+t1 = Screen('Flip', w);
+end
+timing(t) = t1 - t0;
+%WaitSecs(stimulusDuration);
 
-%% Blank time
-Screen('FillRect', w, white);
-Screen('Flip', w, white);
-WaitSecs(blank);
 
-%% Show mask
+%% Show
+for f2 = 1:maskDuration
 Screen('FillPoly', w, [0 0 0], polyCoordsOuter, 3);
-%Screen('FillPoly', w, [255 255 255], polyCoords, 3);
+Screen('FillPoly', w, [255 255 255], polyCoords, 3);
 Screen('Flip', w);
-WaitSecs(maskDuration);
+end
+
+
 DrawFormattedText(w, '?', 'center', 'center', black); %draw question mark
 Screen(w, 'Flip'); % display gabor by flipping
 give_response = false;
@@ -231,9 +231,9 @@ end
 
 %% Avoid presentation times below 0
 
-if stimulusDuration < 0
-  stimulusDuration = 0.016;
-  maskDuration = 0.210;
+if stimulusDuration < 1
+  stimulusDuration = 1;
+  maskDuration = 14;
 end
 
 %% Work with frame rates
@@ -242,7 +242,7 @@ end
   data.Data = [data.Data resptime];
 
   %%% Write the trial information to the text file
-  fprintf (fid, '%d\t%s\t%f\t%f\t%d\t%s\t%f\t\r\n', t, response(t), resptime(t), start_time_trial(t), correct(t), Corr_answer(t), presentation_duration(t));
+  fprintf (fid, '%d\t%s\t%f\t%f\t%d\t%s\t%f\t\r\n', t, response(t), resptime(t), start_time_trial(t), correct(t), Corr_answer(t), stimulusDuration);
   txt_color = [0.9*maximum_value];
   DrawFormattedText(w, '?', 'center', 'center', txt_color); %draw question mark
   WaitSecs(isi);
@@ -250,6 +250,6 @@ end
   Screen('CloseAll');
   fclose(fid);
   cd(subjectsPath);
-save(file_name_mat, 'response','resptime', 'start_time_trial', 'Corr_answer', 'noise', 'time_start_exp', 'correct');
+save(file_name_mat, 'response','timing', 'resptime', 'start_time_trial', 'Corr_answer',  'stimulusDuration','time_start_exp', 'correct');
 cd(myHome);
 end
