@@ -10,8 +10,9 @@ stepsize = 1;
 
 
 %Screen resolution
-res = [1920 1080];
-
+%res = [1920 1080];
+res = [800 600];
+mainRes = [1920 1080];
 myHome = pwd;
 
 %Create Subjectfolder and file
@@ -35,10 +36,14 @@ if exist(file_name_mat) == 2;
 end
 cd(myHome);
 
-Screen('Preference', 'SkipSyncTests', 0);
-screenNum=0;
-offx = 0; offy = 0;
-maskDuration = initalMaskDuration;
+
+%Check number of Screens
+NumberScreens = Screen('Screens'); %If length(NumberScreens) > 1 do stuff!
+Screen('Preference', 'SkipSyncTests', 1);
+screenNum=2;
+
+%maskDuration = initalMaskDuration;
+maskDuration = 14;
 stimulusDuration = initalStimulusDuration;
 isi = 1;  % inter stimulus interval (0.5s default)
 Trialtime = 2;
@@ -61,18 +66,24 @@ if fid == -1
     fprintf('Couldn''t open output file.\n%s\n', message);
 end
 fprintf(fid, 'Subject no: %d\n', data.Subnum);
-fprintf(fid, 'trial\tresponse\tRT\tstart_trial\tcorrect\tCorr_answer\tPresentation_duration\r\n');
+fprintf(fid, 'trial\tresponse\tRT\tstart_trial\tcorrect\tCorr_answer\tPresentation_duration\tactual_timing\r\n');
 cd(myHome);
 
 %% Add randomization of trials (left and right )
 
 while KbCheck; end
 
-[w,rect] = Screen('OpenWindow', screenNum, [255 255 255], [0 0 res(1) res(2)]);
+% if length(NumberScreens > 1)
+%   [w,rect] = Screen('OpenWindow', screenNum, [255 255 255], [mainRes(1) 0 (mainRes(1) + res(1)) res(2)]);
+% else
+%   [w,rect] = Screen('OpenWindow', screenNum, [255 255 255], [0 0 res(1) res(2)]);
+% end
+[w,rect] = Screen('OpenWindow', screenNum, [255 255 255]);
 
 frameRate = 1/Screen('GetFlipInterval',w); %Hz
 % define window w and open screen
 [xc,yc] = RectCenter(rect);
+
 
 %polygon
 polyWidth = 100;
@@ -218,13 +229,13 @@ if response(t) == Corr_answer(t)
   correct(t) = 1;
   correctInaRow = correctInaRow + 1;
   if correctInaRow == 3
-    maskDuration = maskDuration + stepsize;
+    %maskDuration = maskDuration + stepsize;
     stimulusDuration = stimulusDuration - stepsize;
     correctInaRow = 0;
   end
 elseif response(t) ~= Corr_answer(t)
   correct(t) = 0;
-  maskDuration = maskDuration - stepsize;
+  %maskDuration = maskDuration - stepsize;
   stimulusDuration = stimulusDuration + stepsize;
   correctInaRow = 0;
 end
@@ -233,7 +244,7 @@ end
 
 if stimulusDuration < 1
   stimulusDuration = 1;
-  maskDuration = 14;
+  %maskDuration = 14;
 end
 
 %% Work with frame rates
@@ -242,7 +253,7 @@ end
   data.Data = [data.Data resptime];
 
   %%% Write the trial information to the text file
-  fprintf (fid, '%d\t%s\t%f\t%f\t%d\t%s\t%f\t\r\n', t, response(t), resptime(t), start_time_trial(t), correct(t), Corr_answer(t), stimulusDuration);
+  fprintf (fid, '%d\t%s\t%f\t%f\t%d\t%s\t%f\t%f\r\n', t, response(t), resptime(t), start_time_trial(t), correct(t), Corr_answer(t), stimulusDuration, timing(t));
   txt_color = [0.9*maximum_value];
   DrawFormattedText(w, '?', 'center', 'center', txt_color); %draw question mark
   WaitSecs(isi);
