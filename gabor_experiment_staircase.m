@@ -13,10 +13,10 @@ difficulty_startpoint = 2.4;
 difficulty_stepsize = 0.4;
 
 %% Number of trials
-trial_number = 20;
+trial_number = 10;
 
-
-res=[1920 1080]; % screen resolution 800 x 600
+res = [800 600];
+res=[1920 1080]; % screen resolution 800 x 600, adapt this resolution here (of the primary)
 
 % % % difficulty_level_temp = [0 1.8 3.8];
 % % % nr_of_trial_per_diffLevel = 2;
@@ -48,7 +48,7 @@ end
 cd(myHome);
 
 Screen('Preference', 'SkipSyncTests', 1);
-screenNum=0;
+screenNum=2;
 offx = 0; offy = 0;
 Trialtime = 2;
 isi = 1;  % inter stimulus interval (0.5s default)
@@ -94,7 +94,7 @@ trials(:,3) = angle_perm;
 
 while KbCheck; end
 
-[w,rect] = Screen('OpenWindow', screenNum, 0, [0 0 res(1) res(2)]);
+[w,rect] = Screen('OpenWindow', screenNum);
 % define window w and open screen
 [xc,yc] = RectCenter(rect);
 
@@ -300,7 +300,7 @@ ntrials = zeros(1,length(noise_levels));
 for i=1:length(noise_levels)
   id = noise == noise_levels(i) & ~isnan(response);
   ntrials(i) = sum(id);
-  nCorrect(i) = sum(response(id));
+  nCorrect(i) = sum(correct(id));
 end
 
 pCorrect = nCorrect ./ ntrials;
@@ -308,11 +308,11 @@ pCorrect = nCorrect ./ ntrials;
 figure(2)
 clf
 hold on
-plot(noise_levels,pCorrect,'-','MarkerFaceColor','b');
+plot(noise_levels,pCorrect*100,'-','MarkerFaceColor','b');
 %loop through each intensity so each data point can have it's own size.
 for i=1:length(noise_levels);
    sz = ntrials(i)+2;
-   plot(noise_levels(i),pCorrect(i),'ko-','MarkerFaceColor','b','MarkerSize',sz);
+   plot(noise_levels(i),pCorrect(i)*100,'ko-','MarkerFaceColor','b','MarkerSize',sz);
 end
 
 set(gca,'XTick',noise_levels);
