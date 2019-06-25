@@ -7,6 +7,10 @@ from random import choice
 from numpy.random import choice as choice2
 import numpy as np
 import random
+import csv
+import pandas
+import matplotlib
+import matplotlib.pyplot as plt
 
 ##### SETUP #####
 
@@ -14,7 +18,7 @@ import random
 
 ###### EDIT PARAMETERS BELOW #######
 
-num_trials = 40        # number of trials in the experiment on target side
+num_trials = 100        # number of trials in the experiment on target side
 initialStim_dur = 0.100     # time in seconds that the subliminal stim appears on the screen [strong,weak,catch]
 blank_dur = 0.033        # time a blank screen between stim and mask is on screen [strong,weak,catch]
 initialMask_dur = 0.200     # time the mask appears on the screen [strong,weak,catch]
@@ -345,7 +349,7 @@ for shuffled_trial in trial_order:
 	last_trial_dur = iti_dur + stim_dur + blank_dur + mask_dur + response_dur
 	if correct == 1:
 		correctInARow += 1
-		if correctInARow == 3:
+		if correctInARow == 2:
 			stim_dur -= stepsize
 			correctInARow = 0
 	else:
@@ -353,3 +357,7 @@ for shuffled_trial in trial_order:
 		stim_dur += stepsize
 	if stim_dur < stepsize:
 		stim_dur = stepsize
+
+output_file.close()
+win.close()
+
