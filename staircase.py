@@ -25,8 +25,8 @@ initialMask_dur = 0.200     # time the mask appears on the screen [strong,weak,c
 stepsize = 0.0167     # The stepsize for the staircase procedure
 response_dur = 1.5              # time the response period stays on the screen
 iti_durs = [.5,1]  # time with no no image present between trials
-#iti_durs = # HAS TO BE ADAPTED FOR SCANNER
-#strength_prob = [.5,.5]   # probability of the trial being strong or weak
+
+
 stim_size = .04             #size of the stimulus on screen
 mask_size_ratio = 1.6         #how much proptionally bigger is mask
 #stim_line_width =  200      # width of diamond frame lines
@@ -66,9 +66,6 @@ if exp_input[4] == 'yes':
 else:
 	show_practice = False
 
-
-#response_dict = {response_keys[0]:side_options[0],response_keys[1]:side_options[1]}
-#strength_dict = {0:'strong',1:'weak'}
 
 #get shuffled list of trials
 trial_states = {}
@@ -129,22 +126,22 @@ frame_example = visual.ImageStim(
 	pos=[0,-50])
 
 
-#instructions_text5 = visual.TextStim(win, text='Press the "%s" key if the frame is preceded by a diamond missing a point on its %s side.'%(response_keys[nontarget_side],nontarget_side), height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,0.0))
-#instructions_text6 = visual.TextStim(win, text='Press the "%s" key if the frame is preceded by a diamond missing a point on its %s side.'%(response_keys[target_side],target_side), height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,-0.1))
+instructions_text5 = visual.TextStim(win, text='Press the "%s" key if the frame is preceded by a diamond missing a point on its %s side.'%(response_keys['left'],'left'), height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,0.0))
+instructions_text6 = visual.TextStim(win, text='Press the "%s" key if the frame is preceded by a diamond missing a point on its %s side.'%(response_keys['right'],'right'), height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,-0.1))
 
 
-#instructions_text1.wrapWidth = 4
-#instructions_text2.wrapWidth = 4
-#instructions_text3.wrapWidth = 4
-#instructions_text4.wrapWidth = 4
-#instructions_text5.wrapWidth = 4
-#instructions_text6.wrapWidth = 4
+instructions_text1.wrapWidth = 4
+instructions_text2.wrapWidth = 4
+instructions_text3.wrapWidth = 4
+instructions_text4.wrapWidth = 4
+instructions_text5.wrapWidth = 4
+instructions_text6.wrapWidth = 4
 
 instructions2_text = [visual.TextStim(win, text='Geat job! Make sense?', height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,0.1)),
 			visual.TextStim(win, text='In the real experiment you will only have %s seconds to respond.'%response_dur, height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,0.0))]
 
 for instruction in instructions2_text:
-		instruction.wrapWidth = 4
+	instruction.wrapWidth = 4
 
 
 #mis
@@ -182,91 +179,91 @@ event.globalKeys.add(key=quit_key, func=quit_experiment)
 
 ###  instructions  ###
 #explain task
-#if show_practice:
-#	#intro to experiment
-#	instructions_header.draw()
-#	instructions_text1.draw()
-#	win.flip()
-#	event.waitKeys(keyList='space')
+if show_practice:
+	#intro to experiment
+	instructions_header.draw()
+	instructions_text1.draw()
+	win.flip()
+	event.waitKeys(keyList='space')
 #
 #	#show missing corner shapes
-#	instructions_header.draw()
-#	instructions_text2.draw()
-#	instructions_text3.draw()
-#	left_example.draw()
-#	right_example.draw()
-#	win.flip()
-#	event.waitKeys(keyList='space')
+	instructions_header.draw()
+	instructions_text2.draw()
+	instructions_text3.draw()
+	left_example.draw()
+	right_example.draw()
+	win.flip()
+	event.waitKeys(keyList='space')
 #
 #	#show frame shape
-#	instructions_header.draw()
-#	instructions_text4.draw()
-#	frame_example.draw()
-#	win.flip()
-#	event.waitKeys(keyList='space')
+	instructions_header.draw()
+	instructions_text4.draw()
+	frame_example.draw()
+	win.flip()
+	event.waitKeys(keyList='space')
 #
 #	#tell what buttons to press
-#	instructions_header.draw()
-#	instructions_text5.draw()
-#	instructions_text6.draw()
-#	win.flip()
-#	event.waitKeys(keyList='space')
+	instructions_header.draw()
+	instructions_text5.draw()
+	instructions_text6.draw()
+	win.flip()
+	event.waitKeys(keyList='space')
 #
-#	instructions_header.draw()
-#	example_text.draw()
-#	win.flip()
-#	event.waitKeys(keyList='space')
+	instructions_header.draw()
+	example_text.draw()
+	win.flip()
+	event.waitKeys(keyList='space')
 #
-#	for practice_side in ['left','right']:
-#		instructions_header.draw()
-#		win.flip()
-#		core.wait(practice_iti_dur)
-#		#press practice stim
-#		practice_clock.reset()
-#		while practice_clock.getTime() < practice_stim_dur:
-#			instructions_header.draw()
-#			white_diamond.draw()
-#			blockers[practice_side].draw()
-#			win.flip()
-#		#blank screen
-#		while practice_clock.getTime() < practice_stim_dur+practice_blank_dur:
-#			instructions_header.draw()
-#			win.flip()
-#		#press mask
-#		while practice_clock.getTime() < practice_stim_dur+practice_blank_dur+practice_mask_dur:
-#			instructions_header.draw()
-#			mask.draw()
-#			black_diamond.draw()
-#			if version == 'go-nogo' and target_side == practice_side:
-#				press_nothing_text.draw()
-#			else:
-#				if practice_side == 'left':
-#					press_left_text.draw()
-#				else:
-#					press_right_text.draw()
-#			win.flip()
-#		#response
-#		instructions_header.draw()
-#        if practice_side == 'left':
-#			press_left_text.draw()
-#		else:
-#			press_right_text.draw()
-#		win.flip()
-#		event.waitKeys(keyList=response_keys[practice_side])
-#
-#
-#	#Post practice text, get ready for experiment
-#	instructions_header.draw()
-#	for instruction in instructions2_text:
-#		instruction.draw()
-#	win.flip()
-#	event.waitKeys(keyList='space')
-#	experiment_header.draw()
-#	for get_ready in get_ready_text:
-#		get_ready.draw()
-#	win.flip()
-#	event.waitKeys(keyList='space')
-#event.waitKeys(keyList='space')
+	for practice_side in ['left','right']:
+		instructions_header.draw()
+		win.flip()
+		core.wait(practice_iti_dur)
+		#press practice stim
+		practice_clock.reset()
+		while practice_clock.getTime() < practice_stim_dur:
+			instructions_header.draw()
+			white_diamond.draw()
+			blockers[practice_side].draw()
+			win.flip()
+		#blank screen
+		while practice_clock.getTime() < practice_stim_dur+practice_blank_dur:
+			instructions_header.draw()
+			win.flip()
+		#press mask
+		while practice_clock.getTime() < practice_stim_dur+practice_blank_dur+practice_mask_dur:
+			instructions_header.draw()
+			mask.draw()
+			black_diamond.draw()
+			if version == 'go-nogo' and target_side == practice_side:
+				press_nothing_text.draw()
+			else:
+				if practice_side == 'left':
+					press_left_text.draw()
+				else:
+					press_right_text.draw()
+			win.flip()
+		#response
+		instructions_header.draw()
+		if practice_side == 'left':
+			press_left_text.draw()
+		else:
+			press_right_text.draw()
+		win.flip()
+		event.waitKeys(keyList=response_keys[practice_side])
+
+
+	#Post practice text, get ready for experiment
+	instructions_header.draw()
+	for instruction in instructions2_text:
+		instruction.draw()
+	win.flip()
+	event.waitKeys(keyList='space')
+	experiment_header.draw()
+	for get_ready in get_ready_text:
+		get_ready.draw()
+	win.flip()
+	event.waitKeys(keyList='space')
+
 
 ### Main Experiment ###servicde
 #clock reset
@@ -360,4 +357,3 @@ for shuffled_trial in trial_order:
 
 output_file.close()
 win.close()
-
