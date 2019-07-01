@@ -110,15 +110,191 @@ inc = abs (white - grey);
 %%% Prepare keys and trigger
 KbName('UnifyKeyNames');
 choice_key_names = {'b', 'z'}; % b = (blue)right, z(y) = (yellow)left
+escape = KbName('ESCAPE');
 trigger_name = {'t'};
+left_name = {'b'};
+right_name = {'z'};
 choice_keys = KbName(choice_key_names);
 trigger_key = KbName(trigger_name);
+left_key = KbName(left_name);
+right_key = KbName(right_name);
 
-%% Nogo im
+%% Training
+txt_color = [200 200 200];
+DrawFormattedText(w, 'In each trial you will see a circle with stripes that are either angled to the left or to the right. \n Your task will be to indicate the direction of the stripes.', 'center', 'center',  [0 0 0]);
+Screen(w, 'Flip');
+WaitSecs(0.05);
+waiting_for_scanner = 1;
+%%% time_start_exp = GetSecs;
+while waiting_for_scanner
+    [key_is_down, ~, key_code] = KbCheck;
+    if key_is_down && any(key_code(trigger_key))
+        waiting_for_scanner = 0;
+    elseif key_code(escape)
+            ShowCursor;
+            sca;
+            return
+    end
+
+end
+
+% Example 1 - Left
+DrawFormattedText(w, 'Example 1', 'center', 'center', [0 0 0]);
+Screen(w, 'Flip');
+WaitSecs(2);
+maximum_value =256+600;
+%%% [oldmaximumvalue, oldclampcolors, oldapplyToDoubleInputMakeTexture] = Screen('ColorRange', w , maximum_value, 0, 1);
+Screen('ColorRange', w , maximum_value, 0, 1);
+grey  = 256;
+matsize = 400;
+gabor = prep_gabor (0.5, 10, 357, matsize);
+gabor = grey + inc * gabor*0.1 + 0.4;
+
+[gw, gh] = size (gabor); % width and height of gabor
+gabor_int_1 = max(max(gabor));
+noiseimg=(50*randn(matsize+1, matsize+1) + 128);
+noiseimg =  abs(noiseimg);
+noiseimg = noiseimg/max(max(noiseimg));
+noiseimg_scaled = imadjust(noiseimg,[0.1 1.0],[0.1 1]);
+noiseimg_scaled =  noiseimg_scaled*1.4; %%% difficulty_level(t)
+
+    %%% aplly gaussian filtering to the noise
+    sigma = 200; imSize = matsize+1;  trim = 0.0001;
+    s = sigma / imSize;                     % gaussian width as fraction of imageSize
+    X = 1:imSize;                           % X is a vector from 1 to imageSize
+    X0 = (X / imSize) - .5;                 % rescale X -> -.5 to .5
+    [Xm Ym] = meshgrid(X0, X0);
+    gauss = exp( -(((Xm.^2)+(Ym.^2)) ./ (2* s^2)) ); % formula for 2D gaussian
+    gauss(gauss < trim) = 0;                 % trim around edges (for 8-bit colour displays)
+
+    noiseimg_scaled = noiseimg_scaled .* gauss;
+
+
+    gabor = gabor/max(max(gabor));
+    gabor = (gabor + noiseimg_scaled);
+    gabor = gabor/mean(mean(gabor))*gabor_int_1;
+
+    %%% aplly gaussian filtering to the noise
+    sigma = 70; imSize = matsize+1;  trim = 0.01;
+    s = sigma / imSize;                     % gaussian width as fraction of imageSize
+    X = 1:imSize;                           % X is a vector from 1 to imageSize
+    X0 = (X / imSize) - .5;                 % rescale X -> -.5 to .5
+    [Xm Ym] = meshgrid(X0, X0);
+    gauss = exp( -(((Xm.^2)+(Ym.^2)) ./ (2* s^2)) ); % formula for 2D gaussian
+    gauss(gauss < trim) = 0;                 % trim around edges (for 8-bit colour displays)
+    gabor = gabor .* gauss;
+    gabor = gabor + grey;
+
+    gabortex = Screen('MakeTexture', w, gabor, [], [], []); % make gabor texture
+    location = [xc - gw/2 + offsets(1,1), yc - gh/2 + offsets(1,2), xc + gw/2 + offsets(1,1), yc+ gh/2+ offsets(1,2)];
+
+     %%% display gabor
+    Screen(w, 'FillRect', grey);
+    Screen(w, 'DrawTexture', gabortex, [], location); % draw gabor
+    txt_color = [0.9*maximum_value 0.9*maximum_value 0.9*maximum_value];
+    DrawFormattedText(w, '?', 'center', 'center', txt_color); %draw question mark
+    Screen(w, 'Flip'); % display gabor by flipping
+
+%Response
+waitForResponse = 1
+while waitForResponse
+  [key_is_down, ~, key_code] = KbCheck;
+  if key_is_down && any(key_code(left_key))
+            Screen(w, 'FillRect', grey);
+            Screen(w, 'DrawTexture', gabortex, [], location); % draw gabor
+            txt_color = [ 0 0.75*maximum_value 0]; %%% green
+            DrawFormattedText(w, 'Correct', 'center', res(2) - res(2)/3, txt_color); %draw question mark
+            Screen(w, 'Flip'); % display gabor by flipping
+            WaitSecs(0.5);
+            waitForResponse=0;
+        elseif key_code(escape)
+            ShowCursor;
+            sca;
+            return
+        end
+    end
+
+    % Example 2 - Right
+    DrawFormattedText(w, 'Example 2', 'center', 'center', [0 0 0]);
+    Screen(w, 'Flip')
+    WaitSecs(2);
+    maximum_value =256+600;
+    %%% [oldmaximumvalue, oldclampcolors, oldapplyToDoubleInputMakeTexture] = Screen('ColorRange', w , maximum_value, 0, 1);
+    grey  = 256;
+    matsize = 400;
+    gabor = prep_gabor (0.5, 10, 3, matsize);
+    gabor = grey + inc * gabor*0.1 + 1;
+
+    [gw, gh] = size (gabor); % width and height of gabor
+    gabor_int_1 = max(max(gabor));
+    noiseimg=(50*randn(matsize+1, matsize+1) + 128);
+    noiseimg =  abs(noiseimg);
+    noiseimg = noiseimg/max(max(noiseimg));
+    noiseimg_scaled = imadjust(noiseimg,[0.1 1.0],[0.1 1]);
+    noiseimg_scaled =  noiseimg_scaled*1.4; %%% difficulty_level(t)
+
+        %%% aplly gaussian filtering to the noise
+        sigma = 200; imSize = matsize+1;  trim = 0.0001;
+        s = sigma / imSize;                     % gaussian width as fraction of imageSize
+        X = 1:imSize;                           % X is a vector from 1 to imageSize
+        X0 = (X / imSize) - .5;                 % rescale X -> -.5 to .5
+        [Xm Ym] = meshgrid(X0, X0);
+        gauss = exp( -(((Xm.^2)+(Ym.^2)) ./ (2* s^2)) ); % formula for 2D gaussian
+        gauss(gauss < trim) = 0;                 % trim around edges (for 8-bit colour displays)
+
+        noiseimg_scaled = noiseimg_scaled .* gauss;
+
+
+        gabor = gabor/max(max(gabor));
+        gabor = (gabor + noiseimg_scaled);
+        gabor = gabor/mean(mean(gabor))*gabor_int_1;
+
+        %%% aplly gaussian filtering to the noise
+        sigma = 70; imSize = matsize+1;  trim = 0.01;
+        s = sigma / imSize;                     % gaussian width as fraction of imageSize
+        X = 1:imSize;                           % X is a vector from 1 to imageSize
+        X0 = (X / imSize) - .5;                 % rescale X -> -.5 to .5
+        [Xm Ym] = meshgrid(X0, X0);
+        gauss = exp( -(((Xm.^2)+(Ym.^2)) ./ (2* s^2)) ); % formula for 2D gaussian
+        gauss(gauss < trim) = 0;                 % trim around edges (for 8-bit colour displays)
+        gabor = gabor .* gauss;
+        gabor = gabor + grey;
+
+        gabortex = Screen('MakeTexture', w, gabor, [], [], []); % make gabor texture
+        location = [xc - gw/2 + offsets(1,1), yc - gh/2 + offsets(1,2), xc + gw/2 + offsets(1,1), yc+ gh/2+ offsets(1,2)];
+
+         %%% display gabor
+        Screen(w, 'FillRect', grey);
+        Screen(w, 'DrawTexture', gabortex, [], location); % draw gabor
+        txt_color = [0.9*maximum_value 0.9*maximum_value 0.9*maximum_value];
+        DrawFormattedText(w, '?', 'center', 'center', txt_color); %draw question mark
+        Screen(w, 'Flip'); % display gabor by flipping
+
+    %Response
+    waitForResponse = 1
+    while waitForResponse
+      [key_is_down, ~, key_code] = KbCheck;
+      if key_is_down && any(key_code(right_key))
+                Screen(w, 'FillRect', grey);
+                Screen(w, 'DrawTexture', gabortex, [], location); % draw gabor
+                txt_color = [ 0 0.75*maximum_value 0]; %%% green
+                DrawFormattedText(w, 'Correct', 'center', res(2) - res(2)/3, [0 0 0]); %draw question mark
+                Screen(w, 'Flip'); % display gabor by flipping
+                WaitSecs(0.5);
+                waitForResponse=0;
+            elseif key_code(escape)
+                ShowCursor;
+                sca;
+                return
+            end
+        end
+
+
+
 
 %%% wait for scanner trigger (expects a "t" input!)
 txt_color = [200 200 200];
-DrawFormattedText(w, 'Bitte warten Sie! Das Experiment startet gleich!', 'center', 'center', txt_color);
+DrawFormattedText(w, 'Bitte warten Sie! Das Experiment startet gleich!', 'center', 'center',  [0 0 0]);
 Screen(w, 'Flip');
 WaitSecs(0.05);
 
@@ -130,7 +306,13 @@ while waiting_for_scanner
     if key_is_down && any(key_code(trigger_key))
         waiting_for_scanner = 0;
         time_start_exp = GetSecs;
+
+    elseif key_code(escape)
+            ShowCursor;
+            sca;
+            return
     end
+
 end
 %% Parameters for noise
 amount_noise = difficulty_startpoint;
@@ -217,6 +399,10 @@ for t = 1: total_trails_nr
                     WaitSecs(0.5);
                 end
                 break
+          elseif keycode(escape)
+                ShowCursor;
+                sca;
+                return
             else
                 response(t) = 1000;
                 resptime(t) = 999;
