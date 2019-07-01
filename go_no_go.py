@@ -7,26 +7,34 @@ from random import choice
 from numpy.random import choice as choice2
 import numpy as np
 import random
-import csv
-import pandas
-import matplotlib
-import matplotlib.pyplot as plt
 
 ##### SETUP #####
+
+#Experimenter input
+dlg = gui.Dlg(title = 'Experiment Parameters')
+dlg.addField('Subject ID:')
+dlg.addField('Session:')
+dlg.addField('Scanner', choices = ['yes','no'])
+dlg.addField('Stimulus Threshold:')
+dlg.addField('Go Side', choices = ['left','right'])
+dlg.addField('Practice', choices = ['yes','no'])
+exp_input = dlg.show()
+
 
 ### Parameters ###
 
 ###### EDIT PARAMETERS BELOW #######
 
-num_trials = 100        # number of trials in the experiment on target side
-initialStim_dur = 0.100     # time in seconds that the subliminal stim appears on the screen [strong,weak,catch]
-blank_dur = 0.033        # time a blank screen between stim and mask is on screen [strong,weak,catch]
-initialMask_dur = 0.200     # time the mask appears on the screen [strong,weak,catch]
-stepsize = 0.0167     # The stepsize for the staircase procedure
+num_go_trials = 10        # number of go trials in the experiment
+num_nogo_trials = 4	  # numer of nogo trials in the experiment
+num_catch_trials = 4             # number of trials with no stimulus
+stim_dur = {'strong':.0167,'weak':float(exp_input[3]),'catch':0}     # time in seconds that the subliminal stim appears on the screen [strong,weak,catch]
+blank_dur = {'strong':.033,'weak':0.033,'catch':0}        # time a blank screen between stim and mask is on screen [strong,weak,catch]
+mask_dur = {'strong':.2,'weak': .1,'catch':.25}     # time the mask appears on the screen [strong,weak,catch]
 response_dur = 1.5              # time the response period stays on the screen
 iti_durs = [.5,1]  # time with no no image present between trials
-
-
+#iti_durs = # HAS TO BE ADAPTED FOR SCANNER
+#strength_prob = [.5,.5]   # probability of the trial being strong or weak
 stim_size = .04             #size of the stimulus on screen
 mask_size_ratio = 1.6         #how much proptionally bigger is mask
 #stim_line_width =  200      # width of diamond frame lines
@@ -45,14 +53,6 @@ practice_mask_dur = .3
 ###### STOP EDITING BELOW THIS LINE #######
 
 
-#Experimenter input
-dlg = gui.Dlg(title = 'Experiment Parameters')
-dlg.addField('Subject ID:')
-dlg.addField('Session:')
-dlg.addField('Scanner', choices = ['yes','no'])
-dlg.addField('Version:', choices = ['oddball'])
-dlg.addField('Practice', choices = ['yes','no'])
-exp_input = dlg.show()
 
 subid = exp_input[0]
 session = exp_input[1]
@@ -60,23 +60,39 @@ if exp_input[2] == 'yes':
 	scanner = True
 else:
 	scanner = False
-version = exp_input[3]
-if exp_input[4] == 'yes':
+stimulus_strength = exp_input[3]
+go_side = exp_input[4]
+if go_side == 'left':
+	nogo_side = 'right'
+else:
+	nogo_side = 'left'
+if exp_input[5] == 'yes':
 	show_practice = True
 else:
 	show_practice = False
 
 
+#response_dict = {response_keys[0]:side_options[0],response_keys[1]:side_options[1]}
+#strength_dict = {0:'strong',1:'weak'}
+
 #get shuffled list of trials
 trial_states = {}
 n = 0
-for i in range(int(num_trials)):
+for i in range(int(num_go_trials/2)):
 	n+=1
-	trial_states[n] = {'target':'left'}
+	trial_states[n] = {'go_type':'go','strength':'strong'}
 	n+=1
-	trial_states[n] = {'target':'right'}
+	trial_states[n] = {'go_type':'go','strength':'weak'}
+for i in range(int(num_nogo_trials/2)):
+	n+=1
+	trial_states[n] = {'go_type':'nogo','strength':'strong'}
+	n+=1
+	trial_states[n] = {'go_type':'nogo','strength':'weak'}
+for i in range(int(num_catch_trials)):
+	n+=1
+	trial_states[n] = {'go_type':'catch','strength':'catch'}
 
-trial_order = list(range(1,(1+num_trials)))
+trial_order = list(range(1,(1+num_go_trials+num_nogo_trials+num_catch_trials)))
 random.shuffle(trial_order)
 
 
@@ -126,9 +142,12 @@ frame_example = visual.ImageStim(
 	pos=[0,-50])
 
 
-instructions_text5 = visual.TextStim(win, text='Press the "%s" key if the frame is preceded by a diamond missing a point on its %s side.'%(response_keys['left'],'left'), height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,0.0))
-instructions_text6 = visual.TextStim(win, text='Press the "%s" key if the frame is preceded by a diamond missing a point on its %s side.'%(response_keys['right'],'right'), height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,-0.1))
-
+instructions_text5 = visual.TextStim(win, text='Press the "%s" key if the frame is preceded by a diamond missing a point on its %s side.'%(response_keys[go_side],go_side), height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,0.0))
+instructions_text6 = visual.TextStim(win, text='Press nothing if the frame is preceded by a diamond missing a point on its %s side.'%nogo_side, height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,-0.1))
+instructions_text7 = visual.TextStim(win, text='Points will be missing from the left and right with equal frequency,', height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,-0.1))
+instructions_text8 = visual.TextStim(win, text='please keep this in mind when making your response.', height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,-0.2))
+instructions_text7.wrapWidth = 4
+instructions_text8.wrapWidth = 4
 
 instructions_text1.wrapWidth = 4
 instructions_text2.wrapWidth = 4
@@ -141,7 +160,7 @@ instructions2_text = [visual.TextStim(win, text='Geat job! Make sense?', height 
 			visual.TextStim(win, text='In the real experiment you will only have %s seconds to respond.'%response_dur, height = .065, color = 'black', alignHoriz = 'center', alignVert = 'center', pos=(0.0,0.0))]
 
 for instruction in instructions2_text:
-	instruction.wrapWidth = 4
+		instruction.wrapWidth = 4
 
 
 #mis
@@ -159,11 +178,9 @@ experiment_clock = core.Clock()
 
 ### Results Logging ###
 time_stamp = strftime('%d-%m-%Y_%H:%M:%S').replace(':','_')
-output_file_path = 'results/%s_%s_%s_%s.csv'%(subid,session,version,time_stamp)
+output_file_path = 'results/%s_%s_%s_%s_%s.csv'%(subid,session,stimulus_strength,go_side,time_stamp)
 output_file = open(output_file_path,'w+')
-
-###TO DO
-output_file.write('trial,trial_type,stim_side,response,correct,response_time,cumulative_response_time,iti_onset,iti_dur,stim_onset,stim_dur,blank_onset,blank_dur,mask_onset,mask_dur,response_onset,response_dur,target_side,version\n')
+output_file.write('trial,trial_type,side,response,correct,strength,response_time,cumulative_response_time,iti_onset,iti_dur,stim_onset,stim_dur,blank_onset,blank_dur,mask_onset,mask_dur,response_onset,response_dur,go_side,Staircase_stimulus\n')
 output_file.flush()
 
 
@@ -185,8 +202,8 @@ if show_practice:
 	instructions_text1.draw()
 	win.flip()
 	event.waitKeys(keyList='space')
-#
-#	#show missing corner shapes
+
+	#show missing corner shapes
 	instructions_header.draw()
 	instructions_text2.draw()
 	instructions_text3.draw()
@@ -194,26 +211,26 @@ if show_practice:
 	right_example.draw()
 	win.flip()
 	event.waitKeys(keyList='space')
-#
-#	#show frame shape
+
+	#show frame shape
 	instructions_header.draw()
 	instructions_text4.draw()
 	frame_example.draw()
 	win.flip()
 	event.waitKeys(keyList='space')
-#
-#	#tell what buttons to press
+
+	#tell what buttons to press
 	instructions_header.draw()
 	instructions_text5.draw()
 	instructions_text6.draw()
 	win.flip()
 	event.waitKeys(keyList='space')
-#
+
 	instructions_header.draw()
 	example_text.draw()
 	win.flip()
 	event.waitKeys(keyList='space')
-#
+
 	for practice_side in ['left','right']:
 		instructions_header.draw()
 		win.flip()
@@ -234,7 +251,7 @@ if show_practice:
 			instructions_header.draw()
 			mask.draw()
 			black_diamond.draw()
-			if version == 'go-nogo' and target_side == practice_side:
+			if nogo_side == practice_side:
 				press_nothing_text.draw()
 			else:
 				if practice_side == 'left':
@@ -244,18 +261,26 @@ if show_practice:
 			win.flip()
 		#response
 		instructions_header.draw()
-		if practice_side == 'left':
-			press_left_text.draw()
+		if nogo_side == practice_side:
+			press_nothing_text.draw()
+			win.flip()
+			core.wait(2)
 		else:
-			press_right_text.draw()
-		win.flip()
-		event.waitKeys(keyList=response_keys[practice_side])
+			if practice_side == 'left':
+				press_left_text.draw()
+			else:
+				press_right_text.draw()
+			win.flip()
+			event.waitKeys(keyList=response_keys[practice_side])
+
 
 
 	#Post practice text, get ready for experiment
 	instructions_header.draw()
 	for instruction in instructions2_text:
 		instruction.draw()
+	instructions_text7.draw()
+	instructions_text8.draw()
 	win.flip()
 	event.waitKeys(keyList='space')
 	experiment_header.draw()
@@ -265,7 +290,8 @@ if show_practice:
 	event.waitKeys(keyList='space')
 
 
-### Main Experiment ###servicde
+### Main Experiment ###
+
 #clock reset
 win.flip()
 elapse_time = 0
@@ -278,28 +304,29 @@ if scanner:
 
 experiment_clock.reset()
 
-correctInARow = 0
-mask_dur = initialMask_dur
-stim_dur = initialStim_dur
 trial = 0
 for shuffled_trial in trial_order:
 	trial += 1
 	iti_dur = choice(iti_durs)
-	target_side = trial_states[shuffled_trial]['target']
-	if (target_side == 'left'):
+	trial_states[n] = {'go_type':'catch','strength':'weak'}
+	strength = trial_states[shuffled_trial]['strength']
+	go_type = trial_states[shuffled_trial]['go_type']
+	if (go_type == 'go' and go_side == 'left') or (go_type == 'nogo' and nogo_side == 'left'): #### Check here
 		side = 'left'
 	else:
 		side = 'right'
-
+	if go_type == 'catch':
+		side = 'NA'
+	#side = choice2(side_options, p = list(side_prob))
+	#strength = choice2([0,1], p = list(strength_prob))
 	elapse_time += last_trial_dur
 	iti_onset = elapse_time
 	stim_onset = elapse_time + iti_dur
-	blank_onset = elapse_time + iti_dur + stim_dur
-	mask_onset = elapse_time + iti_dur + stim_dur + blank_dur
-	response_onset = elapse_time + iti_dur + stim_dur  + blank_dur + mask_dur
+	blank_onset = elapse_time + iti_dur + stim_dur[strength]
+	mask_onset = elapse_time + iti_dur + stim_dur[strength] + blank_dur[strength]
+	response_onset = elapse_time + iti_dur + stim_dur[strength] + blank_dur[strength] + mask_dur[strength]
 
 	# iti presentation
-	#Add the Parallelport stuff here -> see parallel_port.py
 	while experiment_clock.getTime() < stim_onset:
 		win.flip()
 	#stim presentation
@@ -328,33 +355,25 @@ for shuffled_trial in trial_order:
 				cumulative_response_time = round(experiment_clock.getTime(),3)
 				response_time = round(experiment_clock.getTime() - elapse_time - iti_dur,3)
 				sub_response = response_keys_inv[response[0][0]]
-				if version == 'oddball':
-					if sub_response == side:
-						correct = 1
-					else:
-						correct = 0
-				output_file.write(','.join([str(trial),str(target_side),str(side),str(sub_response),str(correct),str(response_time),str(cumulative_response_time),str(iti_onset),str(iti_dur),str(stim_onset),str(stim_dur),str(blank_onset),str(blank_dur),str(mask_onset),str(mask_dur),str(response_onset),str(response_dur),target_side,version+'\n']))
+				if go_type == 'go':
+					correct = 1
+				elif sub_response == side:
+					correct = 1
+				else:
+					correct = 0
+				if go_type == 'catch':
+					correct = 'NA'
+				output_file.write(','.join([str(trial),str(go_type),str(side),str(sub_response),str(correct),strength,str(response_time),str(cumulative_response_time),str(iti_onset),str(iti_dur),str(stim_onset),str(stim_dur[strength]),str(blank_onset),str(blank_dur[strength]),str(mask_onset),str(mask_dur[strength]),str(response_onset),str(response_dur),go_side,stimulus_strength+'\n']))
 				output_file.flush()
 
 	if not responded:
-		if version == 'go-nogo' and target_type == 'target':
+		if go_type == 'nogo':
 			correct = 1
+		elif go_type == 'catch':
+			correct = 'NA'
 		else:
 			correct = 0
-		output_file.write(','.join([str(trial),str(target_side),str(side),'NA',str(correct),'NA','NA',str(iti_onset),str(iti_dur),str(stim_onset),str(stim_dur),str(blank_onset),str(blank_dur),str(mask_onset),str(mask_dur),str(response_onset),str(response_dur),str(target_side),str(version)+'\n']))
+		output_file.write(','.join([str(trial),str(go_type),str(side),'NA',str(correct),strength,'NA','NA',str(iti_onset),str(iti_dur),str(stim_onset),str(stim_dur[strength]),str(blank_onset),str(blank_dur[strength]),str(mask_onset),str(mask_dur[strength]),str(response_onset),str(response_dur),str(go_side),str(stimulus_strength)+'\n']))
 		output_file.flush()
 	#timing update
-	last_trial_dur = iti_dur + stim_dur + blank_dur + mask_dur + response_dur
-	if correct == 1:
-		correctInARow += 1
-		if correctInARow == 2:
-			stim_dur -= stepsize
-			correctInARow = 0
-	else:
-		correctInARow = 0
-		stim_dur += stepsize
-	if stim_dur < stepsize:
-		stim_dur = stepsize
-
-output_file.close()
-win.close()
+	last_trial_dur = iti_dur + stim_dur[strength] + blank_dur[strength] + mask_dur[strength] + response_dur
